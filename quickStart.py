@@ -67,6 +67,135 @@ def get_markets(sheet, values = []):
         spreadsheetId=SPREADSHEET_ID, body=body).execute()
     print('{0} cells updated.'.format(marketsResults.get('totalUpdatedCells')))
 
+def get_orderbook(sheet):
+    market = MARKET_BTC_USD
+    orderbook(market)
+    with open('orderbook.json') as json_file:
+        orderbookStats = json.load(json_file)
+    bids, asks = [], []
+    bid_count, ask_count = 0, 0
+    for entry in orderbookStats['bids']:
+        bids.append([entry['price'], entry['size']])
+        bid_count += 1
+    for entry in orderbookStats['asks']:
+        asks.append([entry['price'], entry['size']])
+        ask_count += 1
+    print(asks)
+
+    data = [
+        {
+        "range": "Orderbook!A1:B2",
+        "majorDimension": "ROWS",
+        "values": [
+                ["Bids", market],
+                ["Price","Size"]
+            ]
+        },
+        {
+        "range": "Orderbook!A3:B{0}".format(bid_count + 3),
+        "majorDimension": "ROWS",
+        "values": bids
+        },
+        {
+        "range": "Orderbook!D1:E2",
+        "majorDimension": "ROWS",
+        "values": [
+                ["Asks", market],
+                ["Price","Size"]
+            ]
+        },
+        {
+        "range": "Orderbook!D3:E{0}".format(ask_count + 3),
+        "majorDimension": "ROWS",
+        "values": asks
+        },
+    ]
+    body = {
+        'valueInputOption': 'USER_ENTERED',
+        'data': data
+    }
+    marketsResults = sheet.values().batchUpdate(
+        spreadsheetId=SPREADSHEET_ID, body=body).execute()
+    print('{0} cells updated.'.format(marketsResults.get('totalUpdatedCells')))
+
+def get_trades(sheet, values = []):
+    market = MARKET_BTC_USD
+    trades(market)
+    with open('trades.json') as json_file:
+        all_trades = json.load(json_file)
+    trade_count = 0
+    for trade in all_trades['trades']:
+        values.append([trade['side'], trade['size'], trade['price'], trade['createdAt']])
+        trade_count += 1
+        
+    data = [
+        {
+        "range": "Trades!A1:B1",
+        "majorDimension": "ROWS",
+        "values": [
+                ["Trades", market],
+            ]
+        },
+        {
+        "range": "Trades!A2:D2",
+        "majorDimension": "ROWS",
+        "values": [
+                ["Side", "Size", "Price", "CreatedAt"]
+            ]
+        },
+        {
+        "range": "Trades!A3:E{0}".format(trade_count + 3),
+        "majorDimension": "ROWS",
+        "values": values
+        },
+    ]
+    body = {
+        'valueInputOption': 'USER_ENTERED',
+        'data': data
+    }
+    marketsResults = sheet.values().batchUpdate(
+        spreadsheetId=SPREADSHEET_ID, body=body).execute()
+    print('{0} cells updated.'.format(marketsResults.get('totalUpdatedCells')))
+
+
+def get_historicalFunding(sheet, values = []):
+    market = MARKET_BTC_USD
+    historical_funding(market)
+    with open('historicalFundings.json') as json_file:
+        historicalFunding = json.load(json_file)
+
+    funding_count = 0
+    for funding in historicalFunding['historicalFunding']:
+        values.append([funding['market'], funding['rate'], funding['price'], funding['effectiveAt'] ])
+        funding_count += 1
+    data = [
+        {
+        "range": "HistoricalFunding!A1:B1",
+        "majorDimension": "ROWS",
+        "values": [
+                ["Historical Fundings", market],
+            ]
+        },
+        {
+        "range": "HistoricalFunding!A2:D2",
+        "majorDimension": "ROWS",
+        "values": [
+                ["Market", "Rate", "Price", "EffectiveAt"]
+            ]
+        },
+        {
+        "range": "HistoricalFunding!A3:E{0}".format(funding_count + 3),
+        "majorDimension": "ROWS",
+        "values": values
+        },
+    ]
+    body = {
+        'valueInputOption': 'USER_ENTERED',
+        'data': data
+    }
+    marketsResults = sheet.values().batchUpdate(
+        spreadsheetId=SPREADSHEET_ID, body=body).execute()
+    print('{0} cells updated.'.format(marketsResults.get('totalUpdatedCells')))
 
 
 def main():
@@ -97,7 +226,9 @@ def main():
     sheet = service.spreadsheets()
     get_market_stats(sheet)
     get_markets(sheet)
-    
+    get_orderbook(sheet)
+    get_trades(sheet)
+    get_historicalFunding(sheet)
 
     
 
