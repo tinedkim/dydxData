@@ -22,6 +22,13 @@ and the ```dydx-v3-python``` package
 
 Once you run `python quickStart.py`, it should update values in this [spreadsheet](https://docs.google.com/spreadsheets/d/1fOpQr0Sh7zIdXwH0J-BiWk9egr_VPOnYgZ5HPjgqe3k/edit?usp=sharing). To change values for number of days that market stats are fetched and which market you want to look at (from BTC-USD, ETH-USD, or LINK-USD), edit the MARKET and DAYS constants in quickStart file.
 
+### Orderbook Daemon
+* We fetch the current ETH-USD perpertual orderbook
+* Compute the value of trade via ```price * size```
+* Save records where ```value > THRESHOLD```
+* Then, push these records into ```admin > dydx_orderbook``` DB
+* Daemon then sleeps for 60 seconds
+* Rinse and Repeat
 ## Roadmap
 
 I'm still working on:
