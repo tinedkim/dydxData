@@ -13,6 +13,10 @@ Install the Google Client library
 ```bash
 pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 ```
+and the ```dydx-v3-python``` package
+ ```bash
+ pip install dydx-v3-python
+ ```
 
 ## Usage
 
