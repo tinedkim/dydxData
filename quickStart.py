@@ -10,40 +10,23 @@ from googleapiclient import discovery
 import string
 from dataCollection import *
 
-# If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
-# The ID and range of a sample spreadsheet.
+# The ID and range of a spreadsheet.
 SPREADSHEET_ID = '1fOpQr0Sh7zIdXwH0J-BiWk9egr_VPOnYgZ5HPjgqe3k'
 
-
-def get_market_stats(sheet, values = []):
-    days = 7
-    market = MARKET_BTC_USD
-    market_stats(market, days)
-    values = [["days", str(days)]]
-    with open('marketStats.json') as json_file:
-        marketStats = json.load(json_file)
-    for markets in marketStats['markets']:
-        count_key = 0
-        for key in marketStats['markets'][markets]:
-            count_key += 1
-            values.append([key, marketStats['markets'][markets][key]])
-    range = "MarketStats!A1:{}2".format(string.ascii_uppercase[count_key])
-    body = {
-            'values': values,
-            'majorDimension':'COLUMNS',
-        }
-    marketStatResults = sheet.values().update(
-        spreadsheetId=SPREADSHEET_ID, range=range, 
-        valueInputOption='USER_ENTERED', body=body).execute()
-    print('{0} cells updated.'.format(marketStatResults.get('updatedCells')))
+'''
+Parameters for market stats data:
+    market	Market whose statistics are being fetched.
+            Can be one of MARKET_BTC_USD, MARKET_ETH_USD, MARKET_LINK_USD
+    days	Specified day range for the statistics to have been compiled over. 
+            Can be one of 1, 7, 30.
+'''
+MARKET = MARKET_BTC_USD
+DAYS = 7
     
-
 def get_markets(sheet, values = []):
-    markets()
-    with open('markets.json') as json_file:
-        all_markets = json.load(json_file)
+    all_markets = markets()
     for market in all_markets['markets']:
         each_market = []
         keys = []
@@ -67,11 +50,26 @@ def get_markets(sheet, values = []):
         spreadsheetId=SPREADSHEET_ID, body=body).execute()
     print('{0} cells updated.'.format(marketsResults.get('totalUpdatedCells')))
 
+def get_market_stats(sheet, values = []):
+    marketStats = market_stats(MARKET, DAYS)
+    values = [["days", str(DAYS)]]
+    for markets in marketStats['markets']:
+        count_key = 0
+        for key in marketStats['markets'][markets]:
+            count_key += 1
+            values.append([key, marketStats['markets'][markets][key]])
+    range = "MarketStats!A1:{}2".format(string.ascii_uppercase[count_key])
+    body = {
+            'values': values,
+            'majorDimension':'COLUMNS',
+        }
+    marketStatResults = sheet.values().update(
+        spreadsheetId=SPREADSHEET_ID, range=range, 
+        valueInputOption='USER_ENTERED', body=body).execute()
+    print('{0} cells updated.'.format(marketStatResults.get('updatedCells')))
+
 def get_orderbook(sheet):
-    market = MARKET_BTC_USD
-    orderbook(market)
-    with open('orderbook.json') as json_file:
-        orderbookStats = json.load(json_file)
+    orderbookStats = orderbook(MARKET)
     bids, asks = [], []
     bid_count, ask_count = 0, 0
     for entry in orderbookStats['bids']:
@@ -80,14 +78,13 @@ def get_orderbook(sheet):
     for entry in orderbookStats['asks']:
         asks.append([entry['price'], entry['size']])
         ask_count += 1
-    print(asks)
 
     data = [
         {
         "range": "Orderbook!A1:B2",
         "majorDimension": "ROWS",
         "values": [
-                ["Bids", market],
+                ["Bids", MARKET],
                 ["Price","Size"]
             ]
         },
@@ -100,7 +97,7 @@ def get_orderbook(sheet):
         "range": "Orderbook!D1:E2",
         "majorDimension": "ROWS",
         "values": [
-                ["Asks", market],
+                ["Asks", MARKET],
                 ["Price","Size"]
             ]
         },
@@ -119,10 +116,7 @@ def get_orderbook(sheet):
     print('{0} cells updated.'.format(marketsResults.get('totalUpdatedCells')))
 
 def get_trades(sheet, values = []):
-    market = MARKET_BTC_USD
-    trades(market)
-    with open('trades.json') as json_file:
-        all_trades = json.load(json_file)
+    all_trades = trades(MARKET)
     trade_count = 0
     for trade in all_trades['trades']:
         values.append([trade['side'], trade['size'], trade['price'], trade['createdAt']])
@@ -133,7 +127,7 @@ def get_trades(sheet, values = []):
         "range": "Trades!A1:B1",
         "majorDimension": "ROWS",
         "values": [
-                ["Trades", market],
+                ["Trades", MARKET],
             ]
         },
         {
@@ -159,11 +153,7 @@ def get_trades(sheet, values = []):
 
 
 def get_historicalFunding(sheet, values = []):
-    market = MARKET_BTC_USD
-    historical_funding(market)
-    with open('historicalFundings.json') as json_file:
-        historicalFunding = json.load(json_file)
-
+    historicalFunding = historical_funding(MARKET)
     funding_count = 0
     for funding in historicalFunding['historicalFunding']:
         values.append([funding['market'], funding['rate'], funding['price'], funding['effectiveAt'] ])
@@ -173,7 +163,7 @@ def get_historicalFunding(sheet, values = []):
         "range": "HistoricalFunding!A1:B1",
         "majorDimension": "ROWS",
         "values": [
-                ["Historical Fundings", market],
+                ["Historical Fundings", MARKET],
             ]
         },
         {
@@ -230,9 +220,6 @@ def main():
     get_trades(sheet)
     get_historicalFunding(sheet)
 
-    
-
-    
 
 if __name__ == '__main__':
     main()
