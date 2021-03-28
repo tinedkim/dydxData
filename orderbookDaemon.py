@@ -30,16 +30,22 @@ def daemon(seconds):
             
             ORDER_1M = []
             THRESHOLD = 100000
-            orderbook = client.public.get_orderbook(market=MARKET_ETH_USD)
+            MARKET = MARKET_ETH_USD
+            
+            orderbook = client.public.get_orderbook(market=MARKET)
 
             for index, bid in enumerate(orderbook['bids']):
                 usdValue = float(bid['price']) * float(bid['size'])
                 if(usdValue > THRESHOLD):
+                    bid['timeStamp'] = time.ctime(time.time())
+                    bid['market'] = MARKET
                     ORDER_1M.append(bid)
 
             for index, ask in enumerate(orderbook['asks']):
                 usdValue = float(ask['price']) * float(ask['size'])
                 if(usdValue > THRESHOLD):
+                    ask['timeStamp'] = time.ctime(time.time())
+                    ask['market'] = MARKET
                     ORDER_1M.append(ask)
 
                 # Insert into DB
