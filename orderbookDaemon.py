@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from dydx3 import Client
 from dydx3.constants import MARKET_BTC_USD, MARKET_ETH_USD
 from web3 import Web3
@@ -5,11 +7,13 @@ import pymongo
 import time
 # Connecting to Public Endpoint
 ENDPOINT = 'https://api.dydx.exchange'
+# Reading DB address from file
+# DO NOT MAKE THE ADDERSS PUBLIC
 def readDBFile():
     addressFile = open("db.txt", "r")
     return str(addressFile.read())
 
-
+# Daemon Driver Code
 def daemon(seconds):
     iterator = 0
     while(True):
