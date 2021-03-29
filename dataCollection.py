@@ -34,7 +34,7 @@ Get Market Stats.
   days	(Optional): Specified day range  to have been compiled over
                     Can be one of 1, 7, 30.
 '''
-def market_stats(market, day):
+def market_stats(market, day = 1):
   market_stats = client.public.get_stats(
     market=market,
     days=day

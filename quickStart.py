@@ -9,6 +9,7 @@ from pprint import pprint
 from googleapiclient import discovery
 import string
 from dataCollection import *
+from datetime import date
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
@@ -52,22 +53,44 @@ def get_markets(sheet, values = []):
 
 def get_market_stats(sheet, values = []):
     marketStats = market_stats(MARKET, DAYS)
-    values = [["days", str(DAYS)]]
+    values = ["date"]
     for markets in marketStats['markets']:
-        count_key = 0
+        count_key = 1
         for key in marketStats['markets'][markets]:
             count_key += 1
-            values.append([key, marketStats['markets'][markets][key]])
-    range = "MarketStats!A1:{}2".format(string.ascii_uppercase[count_key])
+            values.append(key)
+    range = "MarketStats!A1:{}1".format(string.ascii_uppercase[count_key])
     body = {
-            'values': values,
-            'majorDimension':'COLUMNS',
+            'values': [values],
+            'majorDimension':'ROWS',
         }
     marketStatResults = sheet.values().update(
         spreadsheetId=SPREADSHEET_ID, range=range, 
         valueInputOption='USER_ENTERED', body=body).execute()
     print('{0} cells updated.'.format(marketStatResults.get('updatedCells')))
-
+    
+def append_market_stats(sheet, values = []):
+    today = date.today().strftime("%m/%d/%y")
+    for market_name in [MARKET_BTC_USD, MARKET_ETH_USD, MARKET_LINK_USD]:
+        marketStats = market_stats(market_name)
+        for market in marketStats['markets']:
+            count_key = 1
+            market_values = [today]
+            for key in marketStats['markets'][market]:
+                count_key += 1
+                market_values.append(marketStats['markets'][market][key])
+            values.append(market_values)
+    range = "MarketStats!A1:{}3".format(string.ascii_uppercase[count_key])
+    body = {
+        "majorDimension": "ROWS",
+        "values": values
+        }
+    marketStatResults = sheet.values().append(
+        spreadsheetId=SPREADSHEET_ID, range=range, 
+        valueInputOption='USER_ENTERED', 
+        insertDataOption='INSERT_ROWS', body=body).execute()
+    print('{0} rows appended.'.format(marketStatResults.get('updates')['updatedRows']))
+    
 def get_orderbook(sheet):
     orderbookStats = orderbook(MARKET)
     bids, asks = [], []
@@ -111,9 +134,9 @@ def get_orderbook(sheet):
         'valueInputOption': 'USER_ENTERED',
         'data': data
     }
-    marketsResults = sheet.values().batchUpdate(
+    orderResults = sheet.values().batchUpdate(
         spreadsheetId=SPREADSHEET_ID, body=body).execute()
-    print('{0} cells updated.'.format(marketsResults.get('totalUpdatedCells')))
+    print('{0} cells updated.'.format(orderResults.get('totalUpdatedCells')))
 
 def get_trades(sheet, values = []):
     all_trades = trades(MARKET)
@@ -147,9 +170,9 @@ def get_trades(sheet, values = []):
         'valueInputOption': 'USER_ENTERED',
         'data': data
     }
-    marketsResults = sheet.values().batchUpdate(
+    tradeResults = sheet.values().batchUpdate(
         spreadsheetId=SPREADSHEET_ID, body=body).execute()
-    print('{0} cells updated.'.format(marketsResults.get('totalUpdatedCells')))
+    print('{0} cells updated.'.format(tradeResults.get('totalUpdatedCells')))
 
 
 def get_historicalFunding(sheet, values = []):
@@ -183,10 +206,16 @@ def get_historicalFunding(sheet, values = []):
         'valueInputOption': 'USER_ENTERED',
         'data': data
     }
-    marketsResults = sheet.values().batchUpdate(
+    historicalResults = sheet.values().batchUpdate(
         spreadsheetId=SPREADSHEET_ID, body=body).execute()
-    print('{0} cells updated.'.format(marketsResults.get('totalUpdatedCells')))
+    print('{0} cells updated.'.format(historicalResults.get('totalUpdatedCells')))
 
+def setup_sheet(sheet):
+    get_markets(sheet)
+    get_orderbook(sheet)
+    get_trades(sheet)
+    get_historicalFunding(sheet)
+    get_market_stats(sheet)
 
 def main():
     """Shows basic usage of the Sheets API.
@@ -214,12 +243,11 @@ def main():
 
     # Call the Sheets API
     sheet = service.spreadsheets()
-    get_market_stats(sheet)
-    get_markets(sheet)
-    get_orderbook(sheet)
-    get_trades(sheet)
-    get_historicalFunding(sheet)
 
+    setup_sheet(sheet)
+    
+    #TODO: call daily
+    append_market_stats(sheet)
 
 if __name__ == '__main__':
     main()
